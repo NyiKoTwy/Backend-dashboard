@@ -24,7 +24,7 @@ const userInsights = new Map(); // Map user IDs to their insights data
 const isLocal = process.env.DB_HOST === "localhost";
 const isProduction = process.env.NODE_ENV === "production";
 app.use(cors({
-    origin: "https://dashboardwithnykotwy.netlify.app", //  Allow both local & deployed frontend
+    origin:true,//  Allow both local & deployed frontend
     methods: "GET,POST",
     credentials: true //  Allow cookies in cross-origin requests
 }));
@@ -228,10 +228,10 @@ app.post("/login", async (req, res) => {
 		    const token = generateToken(user);
 		    res.cookie("access-token", token, { 
                 maxAge: 900000, 
-                httpOnly: true, 
-                secure: isProduction, // Secure cookies only in production
-                sameSite: isProduction ? "None" : "Lax" 
-            });
+    httpOnly: true, 
+    secure: true, // Always use secure in production
+    sameSite: "None" // Required for cross-site cookies
+});
             res.json({ message: "Login successful", redirect: "/dashboard" });
         } else {
             res.status(401).json({ message: "Incorrect password or username" });
