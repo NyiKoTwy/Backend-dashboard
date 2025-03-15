@@ -143,17 +143,20 @@ function updateYearOptions(insights) {
         yearDropdown.remove(1);
     }
 
+    // Add console.log to debug what insights contains
+    console.log("Insights for updateYearOptions:", insights);
+
     // If we have the new availableYears array from backend
-    if (typeof insights === 'object' && insights.availableYears && Array.isArray(insights.availableYears)) {
+    if (insights && insights.availableYears && Array.isArray(insights.availableYears) && insights.availableYears.length > 0) {
         insights.availableYears.forEach(year => {
             let newOption = document.createElement("option");
             newOption.value = year;
             newOption.textContent = year;
             yearDropdown.appendChild(newOption);
         });
-    } else if (typeof insights === 'string') {
-        // For backward compatibility with your existing code
-        const extractedYear = insights.split("-")[0]; 
+    } else if (insights && insights.date) {
+        // Fallback: Extract year from the date string
+        const extractedYear = insights.date.split("-")[0]; 
         let existingOptions = Array.from(yearDropdown.options).map(opt => opt.value);
 
         if (!existingOptions.includes(extractedYear)) {
@@ -162,6 +165,15 @@ function updateYearOptions(insights) {
             newOption.textContent = extractedYear;
             yearDropdown.appendChild(newOption);
         }
+    } else {
+        // If no years are available, add a message to the dropdown
+        let newOption = document.createElement("option");
+        newOption.value = "";
+        newOption.textContent = "No years available";
+        newOption.disabled = true;
+        yearDropdown.appendChild(newOption);
+        
+        console.warn("No years available in insights data");
     }
 }
 function drawGuestBirthdays(birthdays, selectedMonth) {
