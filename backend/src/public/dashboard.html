@@ -5,7 +5,22 @@
     <title>Booking Dashboard</title>
     <link rel="stylesheet" href="./style/styles.css">
 </head>
+    <script>
+(function() {
+    // Check if we have an access token cookie
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
     
+    // If no access token, redirect immediately to login
+    if (!getCookie('access-token')) {
+        window.location.href = '/';
+    }
+})();
+</script>
 
 <body>
     <!-- Loading Spinner -->
