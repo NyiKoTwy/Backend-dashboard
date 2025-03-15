@@ -23,13 +23,12 @@ const port = process.env.PORT || 3000;
 const userInsights = new Map(); // Map user IDs to their insights data
 const isLocal = process.env.DB_HOST === "localhost";
 const isProduction = process.env.NODE_ENV === "production";
-
-// Update CORS to allow your Netlify domain
 app.use(cors({
-    origin: ["https://dashboardwithnykotwy.netlify.app", "http://localhost:3000"],
-    methods: "GET,POST,PUT,DELETE",
-    credentials: true // Allow cookies in cross-origin requests
+    origin: "https://dashboardwithnykotwy.netlify.app", //  Allow both local & deployed frontend
+    methods: "GET,POST",
+    credentials: true //  Allow cookies in cross-origin requests
 }));
+
 
 const db = new pg.Client({
     host: process.env.DB_HOST,
@@ -44,40 +43,44 @@ db.connect()
     .then(() => console.log(" Connected to PostgreSQL Database"))
     .catch(err => console.error(" Database Connection Error:", err));
 
+
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 const API_KEY = process.env.API_KEY;
 
 const headers = { "Content-Type": "application/json" };
 
+
 if (!fs.existsSync("uploads")) {
     fs.mkdirSync("uploads");
 }
+
 
 const upload = multer({ dest: "uploads/" });
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 app.use(cookieParser());
-
-// Remove static file serving since we're not serving HTML from backend
-// app.use(express.static(path.join(__dirname, "public")));
-
-const validTokens = new Set(); // Store active tokens in memory
+app.use(express.static(path.join(__dirname, "public")));
+const validTokens = new Set(); //  Store active tokens in memory
 
 const generateToken = (user) => {
     const access_token = jwt.sign({ username: user.name, id: user.id }, JWT_SECRET, { expiresIn: "1h" });  
-    validTokens.add(access_token); // Track issued tokens
+    validTokens.add(access_token); //  Track issued tokens
     return access_token;
 };
-
 const validateToken = (req, res, next) => {
     const access_token = req.cookies["access-token"];
-    console.log("Token received:", access_token);
-    
+    console.log(access_token);
     if (!access_token || !validTokens.has(access_token)) {
-        return res.status(401).json({ message: "Unauthorized" });
+        // Check if this is an AJAX request
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+            return res.status(401).json({ message: "Unauthorized" });
+        } else {
+            // For direct browser requests, redirect to login page
+            return res.redirect('/');
+        }
     }
-    
     try {
         const decoded = jwt.verify(access_token, JWT_SECRET);
         if (decoded) {
@@ -86,12 +89,15 @@ const validateToken = (req, res, next) => {
             return next();
         }
     } catch (err) {
-        console.error("Token validation error:", err);
-        return res.status(401).json({ message: "Unauthorized" });
+        // For direct browser requests, redirect to login page
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+            return res.status(401).json({ message: "Unauthorized" });
+        } else {
+            return res.redirect('/');
+        }
     }
 };
-
-// Invalidate all tokens when the server restarts
+//  Invalidate all tokens when the server restarts
 const clearTokensOnRestart = () => {
     validTokens.clear();
     console.log(" All tokens invalidated due to server restart.");
@@ -128,20 +134,17 @@ Return only raw JSON.
     };
 };
 
-// API health check route
+
 app.get("/", (req, res) => {
-    res.json({ 
-        status: "API is running",
-        message: "Backend API is operational"
-    });
+    res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// API test route
-app.get("/api/test", (req, res) => {
-    res.json({ message: "API is working!" });
+
+app.get("/dashboard", validateToken, (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
 
-// File upload route
+
 app.post("/upload", validateToken, upload.single("file"), async (req, res) => {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
@@ -166,7 +169,7 @@ app.post("/upload", validateToken, upload.single("file"), async (req, res) => {
     }
 });
 
-// Get insights route
+
 app.get("/api/insights", validateToken, (req, res) => {
     const insights = userInsights.get(req.userId);
     
@@ -177,7 +180,7 @@ app.get("/api/insights", validateToken, (req, res) => {
     }
 });
 
-// Update insights route
+
 app.post("/insights", validateToken, async (req, res) => {
     const { year, month } = req.body;
 
@@ -203,7 +206,7 @@ app.post("/insights", validateToken, async (req, res) => {
     }
 });
 
-// Login route
+
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
@@ -215,15 +218,14 @@ app.post("/login", async (req, res) => {
         }
 
         const user = result.rows[0];
-        console.log("User found:", user.name);
-        
+		console.log(user);
         if (user.password === password) {
-            const token = generateToken(user);
-            res.cookie("access-token", token, { 
+		    const token = generateToken(user);
+		    res.cookie("access-token", token, { 
                 maxAge: 900000, 
                 httpOnly: true, 
-                secure: true, // Always use secure in production
-                sameSite: "None" // Required for cross-site cookies
+                secure: isProduction, // Secure cookies only in production
+                sameSite: isProduction ? "None" : "Lax" 
             });
             res.json({ message: "Login successful", redirect: "/dashboard" });
         } else {
@@ -235,29 +237,11 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// Authentication status check for dashboard
-app.get("/dashboard", validateToken, (req, res) => {
-    res.json({ authenticated: true, userId: req.userId });
+
+app.get("/api/test", (req, res) => {
+    res.json({ message: "API is working!" });
 });
 
-// Additional route for auth status check
-app.get("/api/auth-status", validateToken, (req, res) => {
-    res.json({ 
-        authenticated: true, 
-        userId: req.userId,
-        username: req.username 
-    });
-});
-
-// Logout route
-app.post("/logout", (req, res) => {
-    const token = req.cookies["access-token"];
-    if (token) {
-        validTokens.delete(token);
-    }
-    res.clearCookie("access-token");
-    res.json({ message: "Logged out successfully" });
-});
 
 app.listen(port, () => {
     console.log(` Server is running on port ${port}`);
