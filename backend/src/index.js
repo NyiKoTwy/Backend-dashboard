@@ -24,7 +24,7 @@ const userInsights = new Map(); // Map user IDs to their insights data
 const isLocal = process.env.DB_HOST === "localhost";
 const isProduction = process.env.NODE_ENV === "production";
 app.use(cors({
-    origin: "https://dashboardwithnykotwy.netlify.app", //  Allow both local & deployed frontend
+    origin: "https://dashboardwithnyikotwy.netlify.app", //  Allow both local & deployed frontend
     methods: "GET,POST",
     credentials: true //  Allow cookies in cross-origin requests
 }));
