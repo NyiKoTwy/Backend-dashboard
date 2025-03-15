@@ -61,7 +61,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
+
 const validTokens = new Set(); //  Store active tokens in memory
 
 const generateToken = (user) => {
