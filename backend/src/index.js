@@ -225,8 +225,7 @@ app.post("/login", async (req, res) => {
                 maxAge: 60, 
                 httpOnly: true, 
                 secure: isProduction, // Secure cookies only in production
-                sameSite: isProduction ? "None" : "Lax",
-		path: "/" 
+                sameSite: isProduction ? "None" : "Lax"
             });
             res.json({ message: "Login successful", redirect: "/dashboard" });
         } else {
