@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Dashboard</title>
+    <link rel="stylesheet" href="./style/styles.css">
+</head>
+<body>
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading insights, please wait...</p>
+    </div>
+
+    <h1>Booking Report and Analytics Dashboard</h1>
+
+    <!-- Upload File Form -->
+    <div class="upload-form">
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".txt,.csv,.json" required>
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+
+    <div class="option_container">
+        <form id="insights-form" action="/insights" method="POST" class="insights-form">
+            <div class="year_container">
+                <select id="year" name="year">
+                    <option value="">Select Year</option>
+                </select>
+            </div>
+            <div class="month_container">
+                <select id="month" name="month">
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+            <div class="button_container">
+                <button id="submit" type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+
+    <h2 id="insights-title" class="insights_title">No Insights Available. Please Upload a file.</h2>
+    <div id="insights-section" style="display: none;">
+
+        <div class="chart-container">
+            <h2>Arrivals Comparison</h2>
+            <canvas id="arrivalsChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h2>Occupancy & ADR</h2>
+            <canvas id="occupancyChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h2>Age Group Segmentation</h2>
+            <canvas id="ageChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h2>Cancellation Metrics</h2>
+            <canvas id="cancellationsChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h2>Financial Summary</h2>
+            <canvas id="financialChart"></canvas>
+        </div>
+
+        <div class="birthday-container">
+            <h2>Guest Birthdays in Selected Month</h2>
+            <table id="birthdayTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Birthday</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Guest birthday data will be inserted here dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Load Chart.js and dashboard.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="dashboard.js"></script>
+
+</body>
+</html>
