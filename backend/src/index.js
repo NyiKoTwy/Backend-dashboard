@@ -134,7 +134,12 @@ Return only raw JSON.
     };
 };
 
-
+app.get("/api/public-test", (req, res) => {
+  // Add more permissive CORS for this specific route
+  res.header("Access-Control-Allow-Origin", "https://dashboardwithnykotwy.netlify.app");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.json({ message: "Public API is working!" });
+});
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
