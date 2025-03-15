@@ -69,13 +69,41 @@ function initializeDashboard() {
         fetchInsights(this.value);
     });
     
+document.getElementById("insights-form").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent form from navigating to a new URL
+    
+    const year = document.getElementById("year").value;
+    const month = document.getElementById("month").value;
+    
+    showLoadingSpinner(true);
+    
+    fetch(`${BASE_URL}/insights`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ year, month }),
+        credentials: "include"
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data && data.insights) {
+            drawCharts(data.insights);
+            drawGuestBirthdays(data.insights.guestBirthdays, month);
+            document.getElementById("insights-title").textContent = `Insights for ${year}-${month}`;
+        }
+    })
+    .catch(error => console.error("Error fetching insights:", error))
+    .finally(() => showLoadingSpinner(false));
+});
+    
     fetchInsights();
 }
 
 function fetchInsights(selectedYear = null) {
     showLoadingSpinner(true); 
 
-    fetch(`${BASE_URL}/insights`, { 
+    fetch(`${BASE_URL}/api/insights`, { 
         method: "GET",
         credentials: "include"
     })
