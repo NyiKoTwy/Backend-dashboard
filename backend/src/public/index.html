@@ -65,12 +65,26 @@
             const data = await response.json();
 
             if (response.ok) {
-             window.location.href = data.redirect || "/dashboard";
-} else {
-    const errorMessage = document.getElementById('error-message');
-    errorMessage.innerText = data.message;
-    errorMessage.style.display = 'block';
-}
+fetch(`${BASE_URL}/dashboard`, {
+                    method: "GET",
+                    credentials: "include" // Ensures cookies are sent
+                })
+                .then(res => {
+                    if (res.ok) {
+                        window.location.href = "/dashboard"; // Only redirect if authentication is valid
+                    } else {
+                        console.error("Access denied. Authentication failed.");
+                        const errorMessage = document.getElementById('error-message');
+                        errorMessage.innerText = "Authentication failed. Please try again.";
+                        errorMessage.style.display = 'block';
+                    }
+                })
+                .catch(error => console.error("Error verifying authentication:", error));
+            } else {
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.innerText = data.message;
+                errorMessage.style.display = 'block';
+            }
         } catch (error) {
             console.error("Login failed:", error);
             const errorMessage = document.getElementById('error-message');
