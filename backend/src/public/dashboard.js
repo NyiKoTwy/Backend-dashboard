@@ -71,6 +71,38 @@ function initializeDashboard() {
         fetchInsights(this.value);
     });
     
+    // Add event listener for the insights form
+    document.getElementById("insights-form").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevent default form submission
+        showLoadingSpinner(true);
+        
+        const year = document.getElementById("year").value;
+        const month = document.getElementById("month").value;
+        
+        fetch(`${BASE_URL}/insights`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({ year, month })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.insights) {
+                document.getElementById("insights-section").style.display = "block";
+                document.getElementById("insights-title").textContent = `Insights for ${year}-${month}`;
+                drawCharts(data.insights);
+                drawGuestBirthdays(data.insights.guestBirthdays, parseInt(month));
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching insights:", error);
+            document.getElementById("insights-title").textContent = "Error loading insights";
+        })
+        .finally(() => showLoadingSpinner(false));
+    });
+    
     fetchInsights();
 }
 
