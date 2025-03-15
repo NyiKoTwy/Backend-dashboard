@@ -42,30 +42,30 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function initializeDashboard() {
-    document.querySelector("form[action='/upload']").addEventListener("submit", function (event) {
-        event.preventDefault();
-        showLoadingSpinner(true); 
+   document.querySelector("form[action='/upload']").addEventListener("submit", function (event) {
+    event.preventDefault();
+    showLoadingSpinner(true); 
 
-        let formData = new FormData(this);
+    let formData = new FormData(this);
 
-        fetch(`${BASE_URL}/upload`, { 
-            method: "POST",
-            body: formData,
-            credentials: "include"
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data && data.insights) {
-                fetchInsights(); 
-                updateYearOptions(data.insights.date);
+    fetch(`${BASE_URL}/upload`, { 
+        method: "POST",
+        body: formData,
+        credentials: "include"
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data && data.insights) {
+            fetchInsights(); 
+            updateYearOptions(data.insights); // Pass the whole insights object
 
-                let year = data.insights.date.split("-")[0];
-                document.getElementById("insights-title").textContent = `Insights for ${year}`;
-            }
-        })
-        .catch(error => console.error("Error uploading file:", error))
-        .finally(() => showLoadingSpinner(false)); 
-    });
+            let year = data.insights.date.split("-")[0];
+            document.getElementById("insights-title").textContent = `Insights for ${year}`;
+        }
+    })
+    .catch(error => console.error("Error uploading file:", error))
+    .finally(() => showLoadingSpinner(false)); 
+});
 
     document.getElementById("year").addEventListener("change", function () {
         fetchInsights(this.value);
@@ -119,7 +119,7 @@ function fetchInsights(selectedYear = null) {
 
         if (insights.date) {
             document.getElementById("insights-section").style.display = "block";
-            updateYearOptions(insights.date);
+            updateYearOptions(insights); // Pass the whole insights object
 
             if (!selectedYear || insights.date.includes(selectedYear)) {
                 drawCharts(insights);
@@ -131,24 +131,39 @@ function fetchInsights(selectedYear = null) {
     .finally(() => showLoadingSpinner(false)); 
 }
 
-function updateYearOptions(dataYear) {
+function updateYearOptions(insights) {
     const yearDropdown = document.getElementById("year");
     if (!yearDropdown) {
         console.error("Year dropdown not found!");
         return;
     }
 
-    const extractedYear = dataYear.split("-")[0]; 
-    let existingOptions = Array.from(yearDropdown.options).map(opt => opt.value);
+    // Clear existing options except the default "Select Year" option
+    while (yearDropdown.options.length > 1) {
+        yearDropdown.remove(1);
+    }
 
-    if (!existingOptions.includes(extractedYear)) {
-        let newOption = document.createElement("option");
-        newOption.value = extractedYear;
-        newOption.textContent = extractedYear;
-        yearDropdown.appendChild(newOption);
+    // If we have the new availableYears array from backend
+    if (typeof insights === 'object' && insights.availableYears && Array.isArray(insights.availableYears)) {
+        insights.availableYears.forEach(year => {
+            let newOption = document.createElement("option");
+            newOption.value = year;
+            newOption.textContent = year;
+            yearDropdown.appendChild(newOption);
+        });
+    } else if (typeof insights === 'string') {
+        // For backward compatibility with your existing code
+        const extractedYear = insights.split("-")[0]; 
+        let existingOptions = Array.from(yearDropdown.options).map(opt => opt.value);
+
+        if (!existingOptions.includes(extractedYear)) {
+            let newOption = document.createElement("option");
+            newOption.value = extractedYear;
+            newOption.textContent = extractedYear;
+            yearDropdown.appendChild(newOption);
+        }
     }
 }
-
 function drawGuestBirthdays(birthdays, selectedMonth) {
     const birthdayTable = document.getElementById("birthdayTable").getElementsByTagName('tbody')[0];
     birthdayTable.innerHTML = ''; 
