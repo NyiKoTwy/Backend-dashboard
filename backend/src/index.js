@@ -152,11 +152,33 @@ app.post("/upload", validateToken, upload.single("file"), async (req, res) => {
         const data = fs.readFileSync(req.file.path, "utf8");
         fs.unlinkSync(req.file.path); 
 
+        // Extract years from the CSV data
+        const lines = data.split('\n');
+        const uniqueYears = new Set();
+        
+        // Assuming your CSV has a date column, adjust index as needed
+        for (let i = 1; i < lines.length; i++) {  // Skip header row
+            const line = lines[i];
+            if (line.trim()) {
+                const columns = line.split(',');
+                // Assuming date format is YYYY-MM-DD or MM/DD/YYYY
+                // Adjust the regex and extraction based on your actual CSV format
+                const dateColumn = columns[0]; // Change index if your date is in different column
+                const yearMatch = dateColumn.match(/(\d{4})/);
+                if (yearMatch) {
+                    uniqueYears.add(yearMatch[1]);
+                }
+            }
+        }
+        
         const insightPrompt = generateInsightPrompt("2024", "02", data);
         const response = await axios.post(`${API_URL}?key=${API_KEY}`, insightPrompt, { headers });
 
         let insightsText = response.data.candidates[0].content.parts[0].text;
         const insights = JSON.parse(insightsText.replace(/```json|```/g, "").trim());
+        
+        // Add available years to insights
+        insights.availableYears = Array.from(uniqueYears);
         
         // Store insights for this specific user
         userInsights.set(req.userId, insights);
@@ -168,7 +190,6 @@ app.post("/upload", validateToken, upload.single("file"), async (req, res) => {
         res.status(500).json({ message: "Error processing request." });
     }
 });
-
 
 app.get("/api/insights", validateToken, (req, res) => {
     const insights = userInsights.get(req.userId);
