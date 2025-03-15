@@ -222,10 +222,10 @@ app.post("/login", async (req, res) => {
         if (user.password === password) {
 		    const token = generateToken(user);
 		    res.cookie("access-token", token, { 
-                maxAge: 60, 
+                maxAge: 900000, 
                 httpOnly: true, 
                 secure: isProduction, // Secure cookies only in production
-                sameSite: isProduction ? "None" : "Lax"
+                sameSite: isProduction ? "None" : "Lax" 
             });
             res.json({ message: "Login successful", redirect: "/dashboard" });
         } else {
