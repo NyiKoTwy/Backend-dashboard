@@ -222,7 +222,7 @@ app.post("/login", async (req, res) => {
         if (user.password === password) {
 		    const token = generateToken(user);
 		    res.cookie("access-token", token, { 
-                maxAge: 120, 
+                maxAge: 900000, 
                 httpOnly: true, 
                 secure: isProduction, // Secure cookies only in production
                 sameSite: isProduction ? "None" : "Lax" 
